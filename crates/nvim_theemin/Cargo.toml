@@ -1,0 +1,9 @@
+[package]
+name = "nvim_theemin"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+bit-struct = "0.3.2"
+palette = "0.7.6"
+thiserror = "1.0.63"
