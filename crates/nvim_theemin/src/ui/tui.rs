@@ -1,22 +1,23 @@
 mod name;
 mod nr16;
 mod nr8;
-mod tui_highlight_arg;
 
 use palette::Srgb;
 
-pub use self::{name::Name, nr16::Nr16, nr8::Nr8, tui_highlight_arg::TuiHighlightArg};
+pub use self::{name::Name, nr16::Nr16, nr8::Nr8};
 
 use core::fmt;
+
+use super::HighlightArg;
 
 /// Represents all highlighting options for the TUI. See "1. TUI highlight arguments" in `:h
 /// highlight-args`.
 ///
 #[derive(Debug, Clone)]
-pub struct Tui {
+pub struct HighlightArguments {
     /// See `:h highlight-cterm`.
     ///
-    cterm: Vec<TuiHighlightArg>,
+    cterm: Vec<HighlightArg>,
 
     /// See `:h highlight-start`.
     ///
@@ -28,19 +29,19 @@ pub struct Tui {
 
     /// See `:h ctermfg`.
     ///
-    ctermfg: Option<CtermColor>,
+    ctermfg: Option<Color>,
 
     /// See `:h ctermbg`.
     ///
-    ctermbg: Option<CtermColor>,
+    ctermbg: Option<Color>,
 }
 
-impl Tui {
+impl HighlightArguments {
     /// Constructs a new `Tui` with `cterm=NONE`.
     ///
     pub fn new_none() -> Self {
         Self {
-            cterm: vec![TuiHighlightArg::None],
+            cterm: vec![HighlightArg::None],
             start: None,
             stop: None,
             ctermfg: None,
@@ -52,7 +53,7 @@ impl Tui {
 /// Represents a color as defined in `:h cterm-colors`.
 ///
 #[derive(Debug, Clone, Copy)]
-pub enum CtermColor {
+pub enum Color {
     Name(Name),
 
     /// This is from 0 to the number of `:h tui-colors` available (maxes at 24-bit, but we use 32
@@ -69,7 +70,7 @@ pub enum CtermColor {
     None,
 }
 
-impl fmt::Display for CtermColor {
+impl fmt::Display for Color {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Name(scn) => write!(f, "{scn}"),
