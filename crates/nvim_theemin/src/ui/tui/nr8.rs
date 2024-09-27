@@ -26,6 +26,15 @@ impl Nr8 {
     }
 }
 
+impl From<u3> for Nr8 {
+    fn from(value: u3) -> Self {
+        Self {
+            value,
+            is_bold: false,
+        }
+    }
+}
+
 impl From<Name> for Nr8 {
     fn from(name: Name) -> Self {
         let (value, is_bold) = match name {

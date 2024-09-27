@@ -19,6 +19,12 @@ impl Nr16 {
     }
 }
 
+impl From<u4> for Nr16 {
+    fn from(value: u4) -> Self {
+        Self(value)
+    }
+}
+
 impl From<Name> for Nr16 {
     fn from(name: Name) -> Self {
         let x = match name {

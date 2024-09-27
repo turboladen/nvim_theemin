@@ -89,7 +89,7 @@ impl From<Nr8> for Name {
 
 impl fmt::Display for Name {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(&self.as_group_name())
+        f.write_str(self.as_group_name())
     }
 }
 

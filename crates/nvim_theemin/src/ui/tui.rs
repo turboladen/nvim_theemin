@@ -1,14 +1,14 @@
+mod builder;
+mod color;
 mod name;
 mod nr16;
 mod nr8;
 
-use palette::Srgb;
-
-pub use self::{name::Name, nr16::Nr16, nr8::Nr8};
-
-use core::fmt;
+use crate::highlight::{ToHighlightCommand, VimL};
 
 use super::HighlightArg;
+
+pub use self::{builder::Builder, color::Color, name::Name, nr16::Nr16, nr8::Nr8};
 
 /// Represents all highlighting options for the TUI. See "1. TUI highlight arguments" in `:h
 /// highlight-args`.
@@ -48,36 +48,84 @@ impl HighlightArguments {
             ctermbg: None,
         }
     }
+
+    pub fn builder() -> Builder {
+        Builder::default()
+    }
 }
 
-/// Represents a color as defined in `:h cterm-colors`.
-///
-#[derive(Debug, Clone, Copy)]
-pub enum Color {
-    Name(Name),
+impl ToHighlightCommand<VimL> for HighlightArguments {
+    fn to_highlight_command(&self) -> VimL {
+        let mut output = Vec::new();
 
-    /// This is from 0 to the number of `:h tui-colors` available (maxes at 24-bit, but we use 32
-    /// to compensate).
-    ///
-    Nr16(Nr16),
+        if !self.cterm.is_empty() {
+            let cterm_args: String = self
+                .cterm
+                .iter()
+                .map(|arg| arg.as_ref())
+                .collect::<Vec<&str>>()
+                .join(",");
+            output.push(format!("cterm={cterm_args}"));
+        }
 
-    Nr8(Nr8),
+        if let Some(start) = self.start.as_ref() {
+            output.push(format!("start={start}"));
+        }
 
-    /// This is from 0 to the number of `:h tui-colors` available. Also see `:h cterm-colors`.
-    ///
-    Rgb(Srgb<u8>),
+        if let Some(stop) = self.stop.as_ref() {
+            output.push(format!("stop={stop}"));
+        }
 
-    None,
+        if let Some(ctermfg) = self.ctermfg {
+            output.push(format!("ctermfg={ctermfg}"));
+        }
+
+        if let Some(ctermbg) = self.ctermbg {
+            output.push(format!("ctermbg={ctermbg}"));
+        }
+
+        VimL::new(output.join(" "))
+    }
 }
 
-impl fmt::Display for Color {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Name(scn) => write!(f, "{scn}"),
-            Self::Nr16(num) => write!(f, "{num}"),
-            Self::Nr8(num) => write!(f, "{num}"),
-            Self::Rgb(num) => write!(f, "#{num:x}"),
-            Self::None => f.write_str("NONE"),
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    mod to_highlight_command_viml {
+        use crate::ui::HighlightArg;
+
+        use super::*;
+
+        #[test]
+        fn no_args_test() {
+            assert!(HighlightArguments::builder().build().is_none())
+        }
+
+        #[test]
+        fn new_none_test() {
+            assert_eq!(
+                HighlightArguments::new_none().to_highlight_command(),
+                VimL::new("cterm=NONE")
+            );
+        }
+
+        #[test]
+        fn all_args_test() {
+            let args = HighlightArguments::builder()
+                .cterm(vec![HighlightArg::Italic, HighlightArg::Bold])
+                .start("<Esc>[27h;".to_string())
+                .stop("[<Space>r;".to_string())
+                .ctermfg(Color::Rgb(0xffaa33.into()))
+                .ctermbg(Color::Name(Name::Black))
+                .build()
+                .unwrap();
+            assert_eq!(
+                args.to_highlight_command(),
+                VimL::new(
+                    "cterm=italic,bold start=<Esc>[27h; stop=[<Space>r; ctermfg=#ffaa33 ctermbg=Black"
+                )
+            );
         }
     }
 }
